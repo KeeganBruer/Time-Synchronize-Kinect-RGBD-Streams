@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>spPCL</name>
+	<name>time_sync_kinects</name>
   <version>0.0.0</version>
-  <description>The spPCL package</description>
+  <description>Time Synchronize Kinect RGBD Streams</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

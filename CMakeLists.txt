@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(spPCL)
+project(time_sync_kinects)
 
 find_package(catkin REQUIRED COMPONENTS
   pcl_ros
@@ -30,7 +30,7 @@ include_directories(
   SYSTEM ${EIGEN3_INCLUDE_DIR}
 )
 
-add_executable(spPCL src/spPCL.cpp src/registration.cpp)
-target_link_libraries(spPCL ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
-add_dependencies(spPCL spPCL_generate_messages_cpp)
+add_executable(time_sync_kinects src/spPCL.cpp src/registration.cpp)
+target_link_libraries(time_sync_kinects ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+add_dependencies(time_sync_kinects time_sync_kinects_generate_messages_cpp)
 

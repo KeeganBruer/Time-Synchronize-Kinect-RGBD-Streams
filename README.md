@@ -2,11 +2,11 @@
 
 ## Launch Project:
 ```
-> rosrun spPCL spPCL [kinect#] [topics]
+> rosrun time_sync_kinects time_sync_kinects [kinect#] [topics]
 ```
 Example:
 ```
-> rosrun spPCL spPCL 2 /camera1/depth/points /camera2/depth/points
+> rosrun time_sync_kinects time_sync_kinects 2 /camera1/depth/points /camera2/depth/points
 ```
 
 ## Launch Gazebo Test World
