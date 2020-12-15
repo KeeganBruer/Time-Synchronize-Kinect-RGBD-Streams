@@ -1,4 +1,5 @@
 #include "registration.hpp"
+#include "combination.hpp"
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
