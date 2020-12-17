@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 		);
    	}
    	
-	ros::Publisher cloud_pub = nh.advertise<PointCloud>("/sync/camera/points", 1000);
+	ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/sync/camera/points", 1000);
 
    	while(state != -1){ //-1 is the terminate state.
 		if (state == 3) {
@@ -132,10 +132,10 @@ int main(int argc, char** argv)
 			fflush(stdout);
 			std::thread(
 				start_kinect_combination, //Thread Function Name
+				&state, //Reusing state to control child process as well.
 				std::ref(trans_matrix),
 				std::ref(k_list), //Refs for the Master LinkedList
 				std::ref(mutex1),
-				&state, //Reusing state to control child process as well.
 				&cloud_pub //ROS Publisher for completed pointcloud stream.
 			).detach();
         		state = 4; 

@@ -34,7 +34,7 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
                 sensor_msgs::PointCloud2 object_msg;
                 pcl::toROSMsg(mPtrPointCloud,object_msg );
 
-                pub->publish(object_msg);
+                //pub->publish(object_msg);
                 if (*state == -1)
                         return;
         }
