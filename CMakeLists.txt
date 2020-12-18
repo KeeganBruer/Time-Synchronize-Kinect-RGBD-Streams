@@ -30,7 +30,7 @@ include_directories(
   SYSTEM ${EIGEN3_INCLUDE_DIR}
 )
 
-add_executable(time_sync_kinects src/spPCL.cpp src/registration.cpp)
+add_executable(time_sync_kinects src/time_sync_kinects.cpp src/registration.cpp src/combination.cpp)
 target_link_libraries(time_sync_kinects ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 add_dependencies(time_sync_kinects time_sync_kinects_generate_messages_cpp)
 
