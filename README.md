@@ -10,7 +10,7 @@
   - **registration.cpp** <br> This file contains the point cloud registration function that is called for each new thread. It preforms pointcloud registration between the first kinect stream and a stream specified in the parameters.
   - **combination.cpp** <br> This file contains the time synchronization algorithm. The alogorithm increments by a specified time interval and interpolates between the nearest point clouds.
 - ### /worlds
-  - **test.world**
+  - **test.world** <br> Gazebo_ros world file that contains a scene with two Microsoft Kinect360 RGBD cameras and enough detail for the PCL Library's feature based point cloud registration algorithm to work correctly.
   
   
 ## Launch Project:
