@@ -33,7 +33,8 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   fflush(stdout);
   PointCloud::Ptr filtered1 (new PointCloud);
   PointCloud::Ptr filtered2 (new PointCloud);
-
+  if (*state == -1)
+          std::exit(0);
   pthread_mutex_lock(&mutex);
   //Filter out NaN and Inf from the most recent cloud.
   boost::shared_ptr<std::vector<int>> indices(new std::vector<int>);
@@ -44,7 +45,9 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   extract.setNegative(false);
 
   extract.filter(*filtered1);
-
+  printf("\t\t\t\t %d\n", *state);
+  if (*state == -1)
+          std::exit(0);
   //Filter out NaN and Inf from the second most recent cloud.
   boost::shared_ptr<std::vector<int>> indices2(new std::vector<int>);
   pcl::removeNaNFromPointCloud(*recent_cloud2, *indices2);
@@ -94,7 +97,8 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
       src_normals.points[i].y = filtered2->points[i].y;
       src_normals.points[i].z = filtered2->points[i].z;
   }
-
+  if (*state == -1)
+          std::exit(0);
   cout << "Computing target cloud normals\n";
   pcl::PointCloud<pcl::PointNormal>::Ptr tar_normals_ptr (new pcl::PointCloud<pcl::PointNormal>);
   pcl::PointCloud<pcl::PointNormal>& tar_normals = *tar_normals_ptr;
@@ -105,7 +109,8 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
       tar_normals.points[i].y = filtered1->points[i].y;
       tar_normals.points[i].z = filtered1->points[i].z;
   }
-
+  if (*state == -1)
+          std::exit(0);
   // Estimate the SIFT keypoints
   pcl::SIFTKeypoint<pcl::PointNormal, PointT> sift;
   pcl::PointCloud<PointT>::Ptr src_keypoints_ptr (new pcl::PointCloud<PointT>);
@@ -116,7 +121,8 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   sift.setMinimumContrast(min_contrast);
   sift.setInputCloud(src_normals_ptr);
   sift.compute(src_keypoints);
-
+  if (*state == -1)
+          std::exit(0);
   cout << "Found " << src_keypoints.points.size () << " SIFT keypoints in source cloud\n";
 
   pcl::PointCloud<PointT>::Ptr tar_keypoints_ptr (new pcl::PointCloud<PointT>);
@@ -125,7 +131,8 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   sift.compute(tar_keypoints);
 
   cout << "Found " << tar_keypoints.points.size () << " SIFT keypoints in target cloud\n";
-
+  if (*state == -1)
+          std::exit(0);
   // Extract FPFH features from SIFT keypoints
   pcl::PointCloud<pcl::PointXYZ>::Ptr src_keypoints_xyz (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::copyPointCloud (src_keypoints, *src_keypoints_xyz);
@@ -140,6 +147,9 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   fpfh.compute(src_features);
   cout << "Computed " << src_features.size() << " FPFH features for source cloud\n";
 
+  if (*state == -1)
+          std::exit(0);
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr tar_keypoints_xyz (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::copyPointCloud (tar_keypoints, *tar_keypoints_xyz);
   fpfh.setSearchSurface (filtered1);
@@ -149,6 +159,9 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   pcl::PointCloud<pcl::FPFHSignature33>& tar_features = *tar_features_ptr;
   fpfh.compute(tar_features);
   cout << "Computed " << tar_features.size() << " FPFH features for target cloud\n";
+
+  if (*state == -1)
+          std::exit(0);
 
   // Compute the transformation matrix for alignment
   Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();

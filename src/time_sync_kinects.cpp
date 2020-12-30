@@ -9,6 +9,13 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/features/normal_3d.h>
 
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <pcl_ros/transforms.h>
+
+
 #include <std_msgs/Float32MultiArray.h>
 #include <chrono>
 #include <thread>         // std::thread
@@ -33,6 +40,8 @@ std::vector<PointCloud::Ptr> recent_cloud2;
 
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 
+std::vector<std::string> kinect_frameids;
+
 /*
  *	On Kinnect Recieved Function
  *	Arguments:
@@ -42,17 +51,38 @@ pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
  *	Callback that recieves pointclouds from any of the node's subscribed topics.
  *	Used to load pointclouds into a Master LinkedList structure.
  */
-void on_k_recieved(const PointCloud::ConstPtr& msg, int k_num)
+void on_k_recieved(const boost::shared_ptr<const sensor_msgs::PointCloud2>& msg, int k_num)
 {
-  //printf ("Cloud recieved from k%d: width = %d, height = %d\n",k_num, msg->width, msg->height);
-  PointCloud::Ptr p (new PointCloud);
-  *p = *msg;
-  pthread_mutex_lock(&mutex1);
-  k_list[k_num].push_back(p);
-  if (k_list[k_num].size() > 50) {
-	k_list[k_num].pop_front();
-  }
-  pthread_mutex_unlock(&mutex1);
+	pcl::PCLPointCloud2 pcl_pc2;
+  	pcl_conversions::toPCL(*msg, pcl_pc2);
+    	PointCloud::Ptr p (new PointCloud);
+    	pcl::fromPCLPointCloud2(pcl_pc2,*p);
+	std::uint64_t stamp = msg->header.stamp.sec * 1000;
+	stamp += msg->header.stamp.nsec/1000000;
+	p->header.stamp = stamp;
+	for (int i = kinect_frameids.size(); i < k_num; i++) {
+		std::string str1 ("UNDEFINED");
+		kinect_frameids.push_back(str1);
+	}
+	kinect_frameids.at(k_num-1) = p->header.frame_id;
+	//printf("stamp: sec: %d, nsec: %d, msecs: %ld\n", msg->header.stamp.sec, msg->header.stamp.nsec, stamp);
+	/*
+	printf ("Cloud recieved from k%d: width = %d, height = %d\n",
+		k_num, 
+		msg->width, 
+		msg->height
+	);
+	*/
+  	pthread_mutex_lock(&mutex1);
+  	k_list[0].push_back(p);
+  	if (k_list[0].size() > 50) {
+		k_list[0].pop_front();
+	}
+  	k_list[k_num].push_back(p);
+  	if (k_list[k_num].size() > 1) {
+		k_list[k_num].pop_back();
+  	}
+  	pthread_mutex_unlock(&mutex1);
 }
 
 int state = 0;
@@ -93,6 +123,7 @@ int main(int argc, char** argv)
 	}
 	
    	char **kinect_topics = (char**)malloc(kinect_num * sizeof(char*));
+
    	int topic_count = findTopicsFromArguments(kinect_num, argc, argv, kinect_topics);
    	for (int i = 0; i < topic_count; i++) {
 		printf("%s\n", kinect_topics[i]);
@@ -116,8 +147,9 @@ int main(int argc, char** argv)
    	ros::NodeHandle nh;
    	
 	ros::Subscriber subscribers[topic_count];
-   	for (int i = 0; i < topic_count; i++) { 
-       		subscribers[i] = nh.subscribe<PointCloud>(
+   	for (int i = 0; i < topic_count; i++) {
+	       	//sensor_msgs::PointCloud2ConstPtr
+       		subscribers[i] = nh.subscribe<sensor_msgs::PointCloud2>(
 			kinect_topics[i], //topic to subscribe to
 			20, //queue size before new messages are thrown out. 
 			boost::bind(on_k_recieved, _1, i+1) //callback takes 1 message and the id of 
@@ -136,6 +168,7 @@ int main(int argc, char** argv)
 				std::ref(trans_matrix),
 				std::ref(k_list), //Refs for the Master LinkedList
 				std::ref(mutex1),
+				std::ref(kinect_frameids),
 				&cloud_pub //ROS Publisher for completed pointcloud stream.
 			).detach();
         		state = 4; 

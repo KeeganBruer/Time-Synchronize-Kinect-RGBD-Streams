@@ -14,6 +14,6 @@
 #include <string>
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
-void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::vector<std::list<PointCloud::Ptr>> &list, pthread_mutex_t &mutex1, ros::Publisher* pub);
+void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::vector<std::list<PointCloud::Ptr>> &list, pthread_mutex_t &mutex1, std::vector<std::string> &frame_ids, ros::Publisher* pub);
 
 #endif
