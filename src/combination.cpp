@@ -46,11 +46,14 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
 		printf("frameID: %s\nstamp 1: %ld\n\nframeID: %s\nstamp 2: %ld\n", k1_cloud_in.header.frame_id.c_str(), stamp1, k2_cloud_in.header.frame_id.c_str(), stamp2); fflush(stdout);
 		
 		if (stamp2 < current_stamp) {
+			pthread_mutex_lock(&mutex1);
+			delete &k1_cloud_in;
 			k1_cloud_in = **it;
 			it++;
 			k2_cloud_in = **it;
 			stamp1 =k1_cloud_in.header.stamp;
                 	stamp2 =k2_cloud_in.header.stamp;
+			pthread_mutex_unlock(&mutex1);
 		}
 		
 		if (frame_ids.at(1).compare(k2_cloud_in.header.frame_id) != 0) {
