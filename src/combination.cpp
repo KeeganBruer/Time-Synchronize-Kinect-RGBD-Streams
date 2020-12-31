@@ -26,16 +26,15 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
         signal(SIGINT, backup_signal_callback_handler);
 	
 	pthread_mutex_lock(&mutex1);
-        std::list<PointCloud::Ptr>::iterator it = list[0].begin();
-        k1_cloud_in = **it;
-       	it++;
-        k2_cloud_in = **it;
+        k1_cloud_in = *list[0].front();
+       	list[0].pop_front();
+        k2_cloud_in = *list[0].front();
         pthread_mutex_unlock(&mutex1);
 
 	std::uint64_t current_stamp = k1_cloud_in.header.stamp;
         pcl::PointCloud<pcl::PointXYZ>  mPtrPointCloud;
 	while (*state != -1 && end != 1) {
-		if (list[0].empty()) {
+		if (list[0].size() < 2) {
 			continue;
 		}
                 
@@ -43,14 +42,16 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
 		std::uint64_t stamp1 =k1_cloud_in.header.stamp;
 		std::uint64_t stamp2 =k2_cloud_in.header.stamp;
 		
-		printf("frameID: %s\nstamp 1: %ld\n\nframeID: %s\nstamp 2: %ld\n", k1_cloud_in.header.frame_id.c_str(), stamp1, k2_cloud_in.header.frame_id.c_str(), stamp2); fflush(stdout);
+		printf("frameID: %s\nstamp 1: %ld\n", k1_cloud_in.header.frame_id.c_str(), stamp1);
+		printf("current stamp: %ld\n", current_stamp);
+		printf("frameID: %s\nstamp 2: %ld\n", k2_cloud_in.header.frame_id.c_str(), stamp2); 
+		fflush(stdout);
 		
 		if (stamp2 < current_stamp) {
 			pthread_mutex_lock(&mutex1);
-			delete &k1_cloud_in;
-			k1_cloud_in = **it;
-			it++;
-			k2_cloud_in = **it;
+			k1_cloud_in = *list[0].front();
+			list[0].pop_front();
+			k2_cloud_in = *list[0].front();
 			stamp1 =k1_cloud_in.header.stamp;
                 	stamp2 =k2_cloud_in.header.stamp;
 			pthread_mutex_unlock(&mutex1);
@@ -66,6 +67,7 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
 		}
 		mPtrPointCloud = k1_cloud_in;
                 mPtrPointCloud += k2_cloud_in;
+		mPtrPointCloud.header.frame_id = frame_ids.at(0);
 
 
                 sensor_msgs::PointCloud2 object_msg;
@@ -74,6 +76,7 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
                 pub->publish(object_msg);
 		current_stamp += 100;
         }
+	std::exit(0);
 }
 
 
