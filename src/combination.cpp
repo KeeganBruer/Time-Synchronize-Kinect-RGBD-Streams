@@ -20,7 +20,7 @@ void backup_signal_callback_handler(int signum) {
  *	Thread that preforms the time registration and interpolation on recived pointclouds.
  *
  */
-void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::vector<std::list<PointCloud::Ptr>> &list, pthread_mutex_t &mutex1, std::vector<std::string> &frame_ids, ros::Publisher* pub) {
+void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>> &list, pthread_mutex_t &mutex1, ros::Publisher* pub) {
         PointCloud k1_cloud_in; //k1 and k2 pointers - convert to std:vector for handeling 2+ 
         PointCloud k2_cloud_in;
         signal(SIGINT, backup_signal_callback_handler);
@@ -46,29 +46,18 @@ void start_kinect_combination(int *state, Eigen::Matrix4f &trans_matrix, std::ve
 		printf("current stamp: %ld\n", current_stamp);
 		printf("frameID: %s\nstamp 2: %ld\n", k2_cloud_in.header.frame_id.c_str(), stamp2); 
 		fflush(stdout);
-		
-		if (stamp2 < current_stamp) {
-			pthread_mutex_lock(&mutex1);
+		pthread_mutex_lock(&mutex1);
+		for( ; stamp2 < current_stamp; current_stamp+=100) {
 			k1_cloud_in = *list[0].front();
 			list[0].pop_front();
 			k2_cloud_in = *list[0].front();
 			stamp1 =k1_cloud_in.header.stamp;
                 	stamp2 =k2_cloud_in.header.stamp;
-			pthread_mutex_unlock(&mutex1);
 		}
+		pthread_mutex_unlock(&mutex1);
 		
-		if (frame_ids.at(1).compare(k2_cloud_in.header.frame_id) != 0) {
-                        pcl::transformPointCloud(k2_cloud_in, k2_cloud_in, trans_matrix);
-			printf("cloud 2 transformed\n\n\n");
-                }
-		if (frame_ids.at(1).compare(k1_cloud_in.header.frame_id) != 0) {
-                	pcl::transformPointCloud(k1_cloud_in, k1_cloud_in, trans_matrix);
-			printf("cloud 1 transformed\n\n\n");
-		}
 		mPtrPointCloud = k1_cloud_in;
                 mPtrPointCloud += k2_cloud_in;
-		mPtrPointCloud.header.frame_id = frame_ids.at(0);
-
 
                 sensor_msgs::PointCloud2 object_msg;
                 pcl::toROSMsg(mPtrPointCloud,object_msg );

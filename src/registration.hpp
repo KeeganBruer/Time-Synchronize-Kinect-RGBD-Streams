@@ -46,7 +46,7 @@ const float transformation_epsilon = 0;
 const int max_iterations = 100;
 
 
-void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>> &list, Eigen::Matrix4f& trans_matrix, int i);
+void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>> &list, std::vector<Eigen::Matrix4f>& trans_matrixs, int i);
 
 
 typedef pcl::PointXYZ PointT;

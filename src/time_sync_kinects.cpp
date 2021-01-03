@@ -15,33 +15,25 @@
 #include <pcl/conversions.h>
 #include <pcl_ros/transforms.h>
 
-
 #include <std_msgs/Float32MultiArray.h>
 #include <chrono>
 #include <thread>         // std::thread
 #include <signal.h>
 #include <string>
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-
-//transformation matrix to align k1 to k2.
-Eigen::Matrix4f trans_matrix;
-
-//List of pointers storing two kinect inputs streams as linked list.
-//to support more kinects, needs to be array of linked lists.
-std::vector<std::list<PointCloud::Ptr>> k_list;
-
 #include "registration.hpp"
 #include "combination.hpp"
 
-//PointCloud Pointer containing the two most recent clouds.
-std::vector<PointCloud::Ptr> recent_cloud1;
-std::vector<PointCloud::Ptr> recent_cloud2;
+typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+
+//transformation matrix to align k1 to k2.
+std::vector<Eigen::Matrix4f> trans_matrixs;
+
+//vector storing kinect inputs streams as linked lists.
+std::vector<std::list<PointCloud::Ptr>> k_list;
 
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-
 std::vector<std::string> kinect_frameids;
-
 /*
  *	On Kinnect Recieved Function
  *	Arguments:
@@ -53,33 +45,39 @@ std::vector<std::string> kinect_frameids;
  */
 void on_k_recieved(const boost::shared_ptr<const sensor_msgs::PointCloud2>& msg, int k_num)
 {
+	//convert from std_msg to pcl
 	pcl::PCLPointCloud2 pcl_pc2;
   	pcl_conversions::toPCL(*msg, pcl_pc2);
     	PointCloud::Ptr p (new PointCloud);
     	pcl::fromPCLPointCloud2(pcl_pc2,*p);
+
+	//convert time stamp from ros to pcl
 	std::uint64_t stamp = msg->header.stamp.sec * 1000;
 	stamp += msg->header.stamp.nsec/1000000;
 	p->header.stamp = stamp;
+
+	std::string new_frame("map");
+	p->header.frame_id = new_frame;
+
 	for (int i = kinect_frameids.size(); i < k_num; i++) {
 		std::string str1 ("UNDEFINED");
 		kinect_frameids.push_back(str1);
 	}
 	kinect_frameids.at(k_num-1) = p->header.frame_id;
-	//printf("stamp: sec: %d, nsec: %d, msecs: %ld\n", msg->header.stamp.sec, msg->header.stamp.nsec, stamp);
-	/*
-	printf ("Cloud recieved from k%d: width = %d, height = %d\n",
-		k_num, 
-		msg->width, 
-		msg->height
-	);
-	*/
+	int queue_size = 1;
+	if (trans_matrixs.size() >= k_num && !trans_matrixs.at(k_num).isZero(0)) {
+		pcl::transformPointCloud(*p, *p, trans_matrixs.at(k_num));
+		queue_size = 50;
+	}
+
+	//load pointcloud into master linkedlist structure.
   	pthread_mutex_lock(&mutex1);
   	k_list[0].push_back(p);
   	if (k_list[0].size() > 50) {
 		k_list[0].pop_front();
 	}
   	k_list[k_num].push_back(p);
-  	if (k_list[k_num].size() > 1) {
+  	if (k_list[k_num].size() > queue_size) {
 		k_list[k_num].pop_back();
   	}
   	pthread_mutex_unlock(&mutex1);
@@ -110,7 +108,9 @@ int main(int argc, char** argv)
 	signal(SIGINT, signal_callback_handler);
    	if (argc < 1) {
 		printf("Insufficient Arguments.\n");
-		printf("Please provide number of kinect topics followed by the topics seperated by a space.\n");
+		printf("Please provide number of kinect "); 
+		printf("topics followed by the topics ");
+		printf("seperated by a space.\n"); 
 		fflush(stdout);
 		std::exit(1);
    	}
@@ -122,8 +122,8 @@ int main(int argc, char** argv)
 		std::exit(1);
 	}
 	
+	//load kinect topics from command line.
    	char **kinect_topics = (char**)malloc(kinect_num * sizeof(char*));
-
    	int topic_count = findTopicsFromArguments(kinect_num, argc, argv, kinect_topics);
    	for (int i = 0; i < topic_count; i++) {
 		printf("%s\n", kinect_topics[i]);
@@ -134,12 +134,13 @@ int main(int argc, char** argv)
        		k_list.push_back(list);
    	}
    	
+	//start registration thread for each pointcloud stream but the first.
 	for (int i = 1; i < topic_count; i++) {
    		std::thread(
 			getTransformationMatrix, 
 			&state, 
 			std::ref(k_list),
-	       		std::ref(trans_matrix),	
+	       		std::ref(trans_matrixs),	
 			i+1
 		).detach();
    	}
@@ -148,7 +149,6 @@ int main(int argc, char** argv)
    	
 	ros::Subscriber subscribers[topic_count];
    	for (int i = 0; i < topic_count; i++) {
-	       	//sensor_msgs::PointCloud2ConstPtr
        		subscribers[i] = nh.subscribe<sensor_msgs::PointCloud2>(
 			kinect_topics[i], //topic to subscribe to
 			20, //queue size before new messages are thrown out. 
@@ -157,21 +157,29 @@ int main(int argc, char** argv)
    	}
    	
 	ros::Publisher cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/sync/camera/points", 1000);
-
+	int threadStarted = 0;
    	while(state != -1){ //-1 is the terminate state.
-		if (state == 3) {
+		int allMatrixesFound = 1;
+		if (trans_matrixs.size() < topic_count) {
+			ros::spinOnce();
+			continue;
+		}
+		for (int i = 0; i < trans_matrixs.size(); i++) {
+			if (trans_matrixs.at(i).isZero()) {
+				allMatrixesFound = 0;
+			}
+		}
+		if (allMatrixesFound == 1 && threadStarted != 1) {
         		printf("starting Kinect Combination and Interpolation\n");
 			fflush(stdout);
 			std::thread(
 				start_kinect_combination, //Thread Function Name
 				&state, //Reusing state to control child process as well.
-				std::ref(trans_matrix),
 				std::ref(k_list), //Refs for the Master LinkedList
 				std::ref(mutex1),
-				std::ref(kinect_frameids),
 				&cloud_pub //ROS Publisher for completed pointcloud stream.
 			).detach();
-        		state = 4; 
+        		threadStarted = 1; 
 		}
         	ros::spinOnce();
    	}

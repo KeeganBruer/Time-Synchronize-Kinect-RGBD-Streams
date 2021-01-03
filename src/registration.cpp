@@ -4,7 +4,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 
 
-void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>> &list, Eigen::Matrix4f& trans_matrix, int i) {
+void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>> &list, std::vector<Eigen::Matrix4f>& trans_matrixs, int i) {
   printf("Starting Thread %d to Find Transformation Matrix\n", i);
   fflush(stdout);
   pthread_mutex_lock(&mutex);
@@ -172,14 +172,19 @@ void getTransformationMatrix(int *state, std::vector<std::list<PointCloud::Ptr>>
   std::cout << transformation << std::endl;
 
   //end registration
-
+  pthread_mutex_lock(&mutex);
+  for (int matrix_count = trans_matrixs.size(); matrix_count <= i; matrix_count++) {
+	Eigen::Matrix4f empty;
+	trans_matrixs.push_back(empty);
+  }
+  pthread_mutex_unlock(&mutex);
   //Set global tranformation.
-  trans_matrix = transformation;
-  //move state to join thread.
-  *state = 3;
+  trans_matrixs.at(i) = transformation;
+
   printf("Finished Finding Transformation Matrix\n");
   fflush(stdout);
-  //std::exit(0);
+  
+  return;
 }
 
 Eigen::Matrix4f computeInitialAlignment (
