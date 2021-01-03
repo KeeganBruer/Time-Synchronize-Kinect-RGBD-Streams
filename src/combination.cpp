@@ -3,6 +3,8 @@
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 int end = 0;
+float FPS = 60;
+std::uint64_t msec_inc = (((float)1)/FPS) * 1000;
 void backup_signal_callback_handler(int signum) {
 	end = 1;
 	printf("stopping combination\n");
@@ -73,7 +75,7 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
                 pcl::toROSMsg(mPtrPointCloud,object_msg );
 
                 pub->publish(object_msg);
-		current_stamp += 100;
+		current_stamp += msec_inc;
         }
 	std::exit(0);
 }
