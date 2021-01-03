@@ -42,12 +42,12 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 		std::uint64_t stamp1 =k1_cloud_in.header.stamp;
 		std::uint64_t stamp2 =k2_cloud_in.header.stamp;
 		
-		printf("frameID: %s\nstamp 1: %ld\n", k1_cloud_in.header.frame_id.c_str(), stamp1);
-		printf("current stamp: %ld\n", current_stamp);
-		printf("frameID: %s\nstamp 2: %ld\n", k2_cloud_in.header.frame_id.c_str(), stamp2); 
-		fflush(stdout);
+		
 		pthread_mutex_lock(&mutex1);
-		for( ; stamp2 < current_stamp; current_stamp+=100) {
+		for(;stamp2 < current_stamp;) {
+			if (list[0].size() < 2) {
+				break;
+			}
 			k1_cloud_in = *list[0].front();
 			list[0].pop_front();
 			k2_cloud_in = *list[0].front();
@@ -56,6 +56,16 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 		}
 		pthread_mutex_unlock(&mutex1);
 		
+		if (list[0].size() < 2) {
+                        continue;
+                }
+
+		printf("frameID: %s\nstamp 1: %ld\n", k1_cloud_in.header.frame_id.c_str(), stamp1);
+                printf("current stamp: %ld\n", current_stamp);
+                printf("frameID: %s\nstamp 2: %ld\n", k2_cloud_in.header.frame_id.c_str(), stamp2);
+                fflush(stdout);
+		bool isCorrectSelection = (stamp1 < current_stamp && stamp2 > current_stamp);
+		printf("%ld < %ld < %ld is %s\n\n", stamp1, current_stamp, stamp2, isCorrectSelection ? "true" : "false");
 		mPtrPointCloud = k1_cloud_in;
                 mPtrPointCloud += k2_cloud_in;
 
