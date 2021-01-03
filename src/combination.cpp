@@ -23,54 +23,88 @@ void backup_signal_callback_handler(int signum) {
  *
  */
 void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>> &list, pthread_mutex_t &mutex1, ros::Publisher* pub) {
-        PointCloud k1_cloud_in; //k1 and k2 pointers - convert to std:vector for handeling 2+ 
-        PointCloud k2_cloud_in;
-        signal(SIGINT, backup_signal_callback_handler);
+	signal(SIGINT, backup_signal_callback_handler);
+
+	printf("Number of topics %ld\n", list.size());
+
+	PointCloud k1_cloud_in[list.size()]; //k1 and k2 pointers - convert to std:vector for handeling 2+
+        PointCloud k2_cloud_in[list.size()];	
 	
 	pthread_mutex_lock(&mutex1);
-        k1_cloud_in = *list[0].front();
-       	list[0].pop_front();
-        k2_cloud_in = *list[0].front();
-        pthread_mutex_unlock(&mutex1);
+	for (int i = 0; i < list.size(); i++) {
+		k1_cloud_in[i] = *list[i].front();
+       		list[i].pop_front();
+        	k2_cloud_in[i] = *list[i].front();
+	}
+	pthread_mutex_unlock(&mutex1);
 
-	std::uint64_t current_stamp = k1_cloud_in.header.stamp;
-        pcl::PointCloud<pcl::PointXYZ>  mPtrPointCloud;
+	std::uint64_t current_stamp = k1_cloud_in[0].header.stamp;
+	
+        std::uint64_t stamp1[list.size()];
+        std::uint64_t stamp2[list.size()];
+
+        pcl::PointCloud<pcl::PointXYZ>  interpolatedCloud[list.size()];
+	pcl::PointCloud<pcl::PointXYZ>  mPtrPointCloud;
+	int breakLoop = 0;
 	while (*state != -1 && end != 1) {
-		if (list[0].size() < 2) {
-			continue;
+		breakLoop = 0;
+		for (int i = 0; i < list.size(); i++) {
+			if (list[i].size() < 2) {
+				breakLoop = 1;
+				break;
+			}
 		}
+		if (breakLoop == 1)
+			continue;
                 
-                //std::cout << trans_matrix << std::endl;
-		std::uint64_t stamp1 =k1_cloud_in.header.stamp;
-		std::uint64_t stamp2 =k2_cloud_in.header.stamp;
+		for (int i = 0; i < list.size(); i++) {
+			stamp1[i] =k1_cloud_in[i].header.stamp;
+			stamp2[i] =k2_cloud_in[i].header.stamp;
+		}
 		
 		
 		pthread_mutex_lock(&mutex1);
-		for(;stamp2 < current_stamp;) {
-			if (list[0].size() < 2) {
-				break;
+		for (int i = 0; i < list.size(); i++) {
+			for(;stamp2[i] < current_stamp;) {
+				if (list[i].size() < 2) {
+					break;
+				}
+				k1_cloud_in[i] = *list[i].front();
+                		list[i].pop_front();
+                		k2_cloud_in[i] = *list[i].front();
+
+				stamp1[i] =k1_cloud_in[i].header.stamp;
+                		stamp2[i] =k2_cloud_in[i].header.stamp;
 			}
-			k1_cloud_in = *list[0].front();
-			list[0].pop_front();
-			k2_cloud_in = *list[0].front();
-			stamp1 =k1_cloud_in.header.stamp;
-                	stamp2 =k2_cloud_in.header.stamp;
 		}
 		pthread_mutex_unlock(&mutex1);
 		
-		if (list[0].size() < 2) {
-                        continue;
+		breakLoop = 0;
+		for (int i = 0; i < list.size(); i++) {
+                        if (list[i].size() < 2) {
+                                breakLoop = 1;
+				break;
+                        }
                 }
+		if (breakLoop == 1)
+                        continue;
 
-		printf("frameID: %s\nstamp 1: %ld\n", k1_cloud_in.header.frame_id.c_str(), stamp1);
-                printf("current stamp: %ld\n", current_stamp);
-                printf("frameID: %s\nstamp 2: %ld\n", k2_cloud_in.header.frame_id.c_str(), stamp2);
-                fflush(stdout);
-		bool isCorrectSelection = (stamp1 < current_stamp && stamp2 > current_stamp);
-		printf("%ld < %ld < %ld is %s\n\n", stamp1, current_stamp, stamp2, isCorrectSelection ? "true" : "false");
-		mPtrPointCloud = k1_cloud_in;
-                mPtrPointCloud += k2_cloud_in;
-
+		for (int i = 1; i < list.size(); i++) {
+			printf("%d \t \tframeID: %s\nstamp 1: %ld\n",i, k1_cloud_in[i].header.frame_id.c_str(), stamp1[i]);
+                	printf("current stamp: %ld\n", current_stamp);
+                	printf("%d \t \tframeID: %s\nstamp 2: %ld\n",i, k2_cloud_in[i].header.frame_id.c_str(), stamp2[i]);
+                	fflush(stdout);
+			bool isCorrectSelection = (stamp1[i] < current_stamp && stamp2[i] > current_stamp);
+			printf("%ld < %ld < %ld is %s\n\n", stamp1[i], current_stamp, stamp2[i], isCorrectSelection ? "true" : "false");
+			interpolatedCloud[i] =  k1_cloud_in[i];
+                	interpolatedCloud[i] += k2_cloud_in[i];
+		}
+		
+		mPtrPointCloud = interpolatedCloud[0];
+		for (int i = 1; i < list.size(); i++) {
+                	mPtrPointCloud += interpolatedCloud[i];
+		}
+		
                 sensor_msgs::PointCloud2 object_msg;
                 pcl::toROSMsg(mPtrPointCloud,object_msg );
 

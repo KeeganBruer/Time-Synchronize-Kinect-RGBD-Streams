@@ -25,6 +25,7 @@
 #include "combination.hpp"
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
+int queue_size = 50;
 
 //transformation matrix to align k1 to k2.
 std::vector<Eigen::Matrix4f> trans_matrixs;
@@ -64,16 +65,15 @@ void on_k_recieved(const boost::shared_ptr<const sensor_msgs::PointCloud2>& msg,
 		kinect_frameids.push_back(str1);
 	}
 	kinect_frameids.at(k_num-1) = p->header.frame_id;
-	int queue_size = 1;
+	
 	if (trans_matrixs.size() >= k_num && !trans_matrixs.at(k_num).isZero(0)) {
 		pcl::transformPointCloud(*p, *p, trans_matrixs.at(k_num));
-		queue_size = 50;
 	}
 
 	//load pointcloud into master linkedlist structure.
   	pthread_mutex_lock(&mutex1);
   	k_list[0].push_back(p);
-  	if (k_list[0].size() > 50) {
+  	if (k_list[0].size() > queue_size) {
 		k_list[0].pop_front();
 	}
   	k_list[k_num].push_back(p);
