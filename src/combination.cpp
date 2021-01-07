@@ -90,10 +90,10 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
                         continue;
 
 		for (int i = 1; i < list.size(); i++) {
-			printf("%d \t \tframeID: %s\nstamp 1: %ld\n",i, k1_cloud_in[i].header.frame_id.c_str(), stamp1[i]);
-                	printf("current stamp: %ld\n", current_stamp);
-                	printf("%d \t \tframeID: %s\nstamp 2: %ld\n",i, k2_cloud_in[i].header.frame_id.c_str(), stamp2[i]);
-                	fflush(stdout);
+			//printf("%d \t \tframeID: %s\nstamp 1: %ld\n",i, k1_cloud_in[i].header.frame_id.c_str(), stamp1[i]);
+                	//printf("current stamp: %ld\n", current_stamp);
+                	//printf("%d \t \tframeID: %s\nstamp 2: %ld\n",i, k2_cloud_in[i].header.frame_id.c_str(), stamp2[i]);
+                	//fflush(stdout);
 			bool isCorrectSelection = (stamp1[i] < current_stamp && stamp2[i] > current_stamp);
 			printf("%ld < %ld < %ld is %s\n\n", stamp1[i], current_stamp, stamp2[i], isCorrectSelection ? "true" : "false");
 			interpolatedCloud[i] =  k1_cloud_in[i];
