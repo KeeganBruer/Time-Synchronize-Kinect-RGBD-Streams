@@ -27,18 +27,18 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 
 	printf("Number of topics %ld\n", list.size());
 
-	PointCloud k1_cloud_in[list.size()]; //k1 and k2 pointers - convert to std:vector for handeling 2+
-        PointCloud k2_cloud_in[list.size()];	
+	PointCloud::ConstPtr k1_cloud_in[list.size()]; //k1 and k2 pointers - convert to std:vector for handeling 2+
+	PointCloud::ConstPtr k2_cloud_in[list.size()];	
 	
 	pthread_mutex_lock(&mutex1);
 	for (int i = 0; i < list.size(); i++) {
-		k1_cloud_in[i] = *list[i].front();
+		k1_cloud_in[i] = list[i].front();
        		list[i].pop_front();
-        	k2_cloud_in[i] = *list[i].front();
+        	k2_cloud_in[i] = list[i].front();
 	}
 	pthread_mutex_unlock(&mutex1);
 
-	std::uint64_t current_stamp = k1_cloud_in[0].header.stamp;
+	std::uint64_t current_stamp = k1_cloud_in[0]->header.stamp;
 	
         std::uint64_t stamp1[list.size()];
         std::uint64_t stamp2[list.size()];
@@ -58,8 +58,8 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 			continue;
                 
 		for (int i = 0; i < list.size(); i++) {
-			stamp1[i] =k1_cloud_in[i].header.stamp;
-			stamp2[i] =k2_cloud_in[i].header.stamp;
+			stamp1[i] =k1_cloud_in[i]->header.stamp;
+			stamp2[i] =k2_cloud_in[i]->header.stamp;
 		}
 		
 		
@@ -69,12 +69,12 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 				if (list[i].size() < 2) {
 					break;
 				}
-				k1_cloud_in[i] = *list[i].front();
+				k1_cloud_in[i] = list[i].front();
                 		list[i].pop_front();
-                		k2_cloud_in[i] = *list[i].front();
+                		k2_cloud_in[i] = list[i].front();
 
-				stamp1[i] =k1_cloud_in[i].header.stamp;
-                		stamp2[i] =k2_cloud_in[i].header.stamp;
+				stamp1[i] =k1_cloud_in[i]->header.stamp;
+                		stamp2[i] =k2_cloud_in[i]->header.stamp;
 			}
 		}
 		pthread_mutex_unlock(&mutex1);
@@ -88,23 +88,42 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
                 }
 		if (breakLoop == 1)
                         continue;
-
+		
+		pcl::KdTreeFLANN<pcl::PointXYZ> tree;
+		pcl::PointXYZ p1;
+                pcl::PointXYZ p2;
 		for (int i = 1; i < list.size(); i++) {
 			//printf("%d \t \tframeID: %s\nstamp 1: %ld\n",i, k1_cloud_in[i].header.frame_id.c_str(), stamp1[i]);
                 	//printf("current stamp: %ld\n", current_stamp);
                 	//printf("%d \t \tframeID: %s\nstamp 2: %ld\n",i, k2_cloud_in[i].header.frame_id.c_str(), stamp2[i]);
                 	//fflush(stdout);
-			bool isCorrectSelection = (stamp1[i] < current_stamp && stamp2[i] > current_stamp);
-			printf("%ld < %ld < %ld is %s\n\n", stamp1[i], current_stamp, stamp2[i], isCorrectSelection ? "true" : "false");
-			interpolatedCloud[i] =  k1_cloud_in[i];
-                	interpolatedCloud[i] += k2_cloud_in[i];
-		}
-		
+			bool isCorrectSelection = (stamp1[i] <= current_stamp && stamp2[i] >= current_stamp);
+			printf("%ld < %ld < %ld is %s  ", stamp1[i], current_stamp, stamp2[i], isCorrectSelection ? "true" : "false");
+
+			
+			tree.setInputCloud(k1_cloud_in[i]);
+			std::vector<int> nn_indices (1);
+			std::vector<float> nn_dists (1);
+			for (int j = 0; j < k1_cloud_in[i]->size(); j++){
+				p1 = k1_cloud_in[i]->points[j];
+                                p2 = k2_cloud_in[i]->points[j];
+				tree.nearestKSearch (p2, 1, nn_indices, nn_dists);
+				p1 = k1_cloud_in[i]->points[nn_indices[0]];	
+				float x = p1.x + ((current_stamp - stamp1[i]) * ((p2.x - p1.x)/(stamp2[i]-stamp1[i])) );
+				float y = p1.y + ((current_stamp - stamp1[i]) * ((p2.y - p1.y)/(stamp2[i]-stamp1[i])) );
+				float z = p1.z + ((current_stamp - stamp1[i]) * ((p2.z - p1.z)/(stamp2[i]-stamp1[i])) );
+				pcl::PointXYZ new_point(x, y, z);
+       				interpolatedCloud[i].push_back(new_point);
+			}
+
+       		}
+		printf("\n");
 		mPtrPointCloud = interpolatedCloud[0];
 		for (int i = 1; i < list.size(); i++) {
                 	mPtrPointCloud += interpolatedCloud[i];
 		}
-		
+		mPtrPointCloud.header.frame_id = "map";
+		mPtrPointCloud.header.stamp = current_stamp;
                 sensor_msgs::PointCloud2 object_msg;
                 pcl::toROSMsg(mPtrPointCloud,object_msg );
 
