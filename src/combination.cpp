@@ -3,8 +3,9 @@
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 int end = 0;
-float FPS = 60;
-std::uint64_t msec_inc = (((float)1)/FPS) * 1000;
+//float FPS = 60;
+//std::uint64_t msec_inc = (((float)1)/FPS) * 1000;
+std::uint64_t msec_inc = 100;
 void backup_signal_callback_handler(int signum) {
 	end = 1;
 	printf("stopping combination\n");
@@ -62,7 +63,6 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 			stamp2[i] =k2_cloud_in[i]->header.stamp;
 		}
 		
-		
 		pthread_mutex_lock(&mutex1);
 		for (int i = 0; i < list.size(); i++) {
 			for(;stamp2[i] < current_stamp;) {
@@ -78,16 +78,6 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 			}
 		}
 		pthread_mutex_unlock(&mutex1);
-		
-		breakLoop = 0;
-		for (int i = 0; i < list.size(); i++) {
-                        if (list[i].size() < 2) {
-                                breakLoop = 1;
-				break;
-                        }
-                }
-		if (breakLoop == 1)
-                        continue;
 		
 		pcl::KdTreeFLANN<pcl::PointXYZ> tree;
 		pcl::PointXYZ p1;
@@ -105,10 +95,10 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 			std::vector<int> nn_indices (1);
 			std::vector<float> nn_dists (1);
 			for (int j = 0; j < k1_cloud_in[i]->size(); j++){
-				p1 = k1_cloud_in[i]->points[j];
                                 p2 = k2_cloud_in[i]->points[j];
 				tree.nearestKSearch (p2, 1, nn_indices, nn_dists);
-				p1 = k1_cloud_in[i]->points[nn_indices[0]];	
+				p1 = k1_cloud_in[i]->points[nn_indices[0]];
+
 				float x = p1.x + ((current_stamp - stamp1[i]) * ((p2.x - p1.x)/(stamp2[i]-stamp1[i])) );
 				float y = p1.y + ((current_stamp - stamp1[i]) * ((p2.y - p1.y)/(stamp2[i]-stamp1[i])) );
 				float z = p1.z + ((current_stamp - stamp1[i]) * ((p2.z - p1.z)/(stamp2[i]-stamp1[i])) );
@@ -124,6 +114,7 @@ void start_kinect_combination(int *state, std::vector<std::list<PointCloud::Ptr>
 		}
 		mPtrPointCloud.header.frame_id = "map";
 		mPtrPointCloud.header.stamp = current_stamp;
+
                 sensor_msgs::PointCloud2 object_msg;
                 pcl::toROSMsg(mPtrPointCloud,object_msg );
 

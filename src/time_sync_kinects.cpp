@@ -34,7 +34,6 @@ std::vector<Eigen::Matrix4f> trans_matrixs;
 std::vector<std::list<PointCloud::Ptr>> k_list;
 
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-std::vector<std::string> kinect_frameids;
 /*
  *	On Kinnect Recieved Function
  *	Arguments:
@@ -57,15 +56,6 @@ void on_k_recieved(const boost::shared_ptr<const sensor_msgs::PointCloud2>& msg,
 	stamp += msg->header.stamp.nsec/1000000;
 	p->header.stamp = stamp;
 
-	std::string new_frame("map");
-	p->header.frame_id = new_frame;
-
-	for (int i = kinect_frameids.size(); i < k_num; i++) {
-		std::string str1 ("UNDEFINED");
-		kinect_frameids.push_back(str1);
-	}
-	kinect_frameids.at(k_num-1) = p->header.frame_id;
-	
 	if (trans_matrixs.size() >= k_num && !trans_matrixs.at(k_num).isZero(0)) {
 		pcl::transformPointCloud(*p, *p, trans_matrixs.at(k_num));
 	}
