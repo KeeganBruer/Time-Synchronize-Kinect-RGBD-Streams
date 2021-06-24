@@ -14,7 +14,8 @@
 
 ## Install Package:
 ```
-> git clone git.github.com time_sync_kinects
+> git clone https://github.com/KeeganBruer/Time-Synchronize-Kinect-RGBD-Streams.git time_sync_kinects
+> catkin_make
 ```
 ## Launch Project:
 ```
