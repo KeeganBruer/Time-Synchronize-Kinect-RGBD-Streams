@@ -11,8 +11,11 @@
   - **combination.cpp** <br> This file contains the time synchronization algorithm. The alogorithm increments by a specified time interval and interpolates between the nearest point clouds.
 - ### /worlds
   - **test.world** <br> Gazebo_ros world file that contains a scene with two Microsoft Kinect360 RGBD cameras and enough detail for the PCL Library's feature based point cloud registration algorithm to work correctly.
-  
-  
+
+## Install Package:
+```
+> git clone git.github.com time_sync_kinects
+```
 ## Launch Project:
 ```
 > rosrun time_sync_kinects time_sync_kinects [kinect#] [topics]
