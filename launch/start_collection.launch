@@ -9,9 +9,19 @@
                 <param name="pose" type="string" value="0 3 2 0 0.5 -1.5" />
                 <param name="count" type="int" value="5" />
         </node>
+	<node name="kinect3_tf_broadcaster" pkg="time_sync_kinects" type="tf_broadcaster.py" respawn="false">
+                <param name="tf_name" type="string" value="kinect3" />
+                <param name="pose" type="string" value="3 0 2 0 0.5 3" />
+                <param name="count" type="int" value="5" />
+        </node>
+	<node name="kinect4_tf_broadcaster" pkg="time_sync_kinects" type="tf_broadcaster.py" respawn="false">
+                <param name="tf_name" type="string" value="kinect4" />
+                <param name="pose" type="string" value="3 0 2 0 0.5 0" />
+                <param name="count" type="int" value="5" />
+        </node>
 	<node name="data_collector" pkg="time_sync_kinects" type="data_collector.py" respawn="false" output="screen">
-                <param name="tf_topics" type="string" value="[kinect1, kinect2]" />
-                <param name="depth_topics" type="string" value="[/camera1/depth/image_raw, /camera2/depth/image_raw]" /> 
+                <param name="tf_topics" type="string" value="[kinect1, kinect2, kinect3, kinect4]" />
+                <param name="depth_topics" type="string" value="[/camera1/depth/image_raw, /camera2/depth/image_raw, /camera3/depth/image_raw, /camera4/depth/image_raw]" /> 
         	<param name="save_split" type="int" value="500" />
 		<param name="collection_type" type="int" value="1" />
 	</node>

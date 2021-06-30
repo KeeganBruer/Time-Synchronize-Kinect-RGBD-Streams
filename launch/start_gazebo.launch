@@ -7,4 +7,8 @@
     <arg name="recording" value="false"/>
     <arg name="debug" value="false"/>
   </include>
+  <node name="model_mover" pkg="time_sync_kinects" type="model_mover.py" respawn="false" output="screen">
+    
+  </node>
+
 </launch>

@@ -8,6 +8,7 @@ import cv2
 import tf
 import numpy as np
 import os
+import threading
 
 
 sample_split = 0
@@ -25,6 +26,7 @@ def callback(ros_image, args):
     global Y
     global sample_split
     global sample_type
+    global save_count
     _id = args[0]
     listener = args[1]
     tf_topic = args[2]
@@ -55,15 +57,14 @@ def callback(ros_image, args):
         out_y = Y
         X = []
         Y = []
-        save_data(out_x, out_y)
+        save_data(out_x, out_y, save_count)
+        save_count += 1
         
 
-def save_data(sample_x, sample_y):
-    global save_count
+def save_data(sample_x, sample_y, save_count):
     print("Saving {0} points".format(len(sample_x)))
     print("Saving to {0}/catkin_ws/src/time_sync_kinects/sample_set_{1}".format(os.path.expanduser("~"), save_count))
     np.savez_compressed('{0}/catkin_ws/src/time_sync_kinects/sample_set_{1}'.format(os.path.expanduser("~"), save_count), sample_set_x=sample_x, sample_set_y=sample_y, repr_type=sample_type)
-    save_count += 1
     del sample_x[:]
     del sample_y[:]
 
