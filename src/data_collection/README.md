@@ -12,6 +12,7 @@ The distribution we are encoding takes in the position of the depth camera, the 
  <br>
 To collect this data, we run a ROS node that will listen for any number of kinect cameras and transform frames. The ROS node uses the transform frame to fill out the first 6 arguments of X, the x, y, z, pitch, roll and yaw of the camera. The node then uses the timestamp of the depth image fill out the Time argument of X.  The node then loops over the width and height of the depth image filling out the last arguments of X, x and y. Finally, the node uses an x and y, given in the X, to access the depth from the depth image and stores that as the Y.
 <br>
+<br>
 All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "1", as an easy way to access which format the data was collected in. 
 
 ## Representations Option 2
@@ -24,5 +25,6 @@ The distribution we are encoding takes in the position of the depth camera, and 
 <br>
 <br>
  To collect this data, we run a ROS node that will listen for any number of kinect cameras and transform frames. The ROS node uses the transform frame to fill out the first 6 arguments of X, the x, y, z, pitch, roll and yaw of the camera. The node also uses the timestamp of the depth image fill out the last argument of X. Finally, the node uses the received depth image to construct Y, an array of all distance values.
+<br>
 <br>
 All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "2", as an easy way to access which format the data was collected in. 
