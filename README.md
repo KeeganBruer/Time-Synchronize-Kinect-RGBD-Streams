@@ -12,7 +12,7 @@
   - **combination.cpp** <br> This file contains the time synchronization algorithm. The alogorithm increments by a specified time interval and interpolates between the nearest point clouds.
 - ### /data_collection
   - **tf_broadcaster.py** <br> This file contains a node to broadcast a tf transform, used in data collection to collect the positional data of the cameras. If using automatic registration, this node is not needed.
-  - **data_collector.py** <br> This file contains a node to collect training data based the the specifications detailed [here](https://github.com/KeeganBruer/Time-Synchronize-Kinect-RGBD-Streams/tree/main/src/data_collection/README.md)
+  - [**data_collector.py**](https://github.com/KeeganBruer/Time-Synchronize-Kinect-RGBD-Streams/blob/main/src/data_collection/tf_broadcaster.py) <br> This file contains a node to collect training data based the the specifications detailed [here](https://github.com/KeeganBruer/Time-Synchronize-Kinect-RGBD-Streams/tree/main/src/data_collection/README.md)
 - ### /gazebo_utils
   - [**model_mover.py**](https://github.com/KeeganBruer/Time-Synchronize-Kinect-RGBD-Streams/blob/main/src/gazebo_utils/model_mover.py) <br> This file broadcasts a message to move a gazebo model.  
 - ### /launch
