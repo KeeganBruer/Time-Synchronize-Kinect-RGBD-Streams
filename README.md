@@ -10,9 +10,11 @@
 - ### /registration  
   - **registration.cpp** <br> This file contains the point cloud registration function that is called for each new thread. It preforms pointcloud registration between the first kinect stream and a stream specified in the parameters.
   - **combination.cpp** <br> This file contains the time synchronization algorithm. The alogorithm increments by a specified time interval and interpolates between the nearest point clouds.
-- ### data_collection
+- ### /data_collection
   - **tf_broadcaster.py** <br> This file contains a node to broadcast a tf transform, used in data collection to collect the positional data of the cameras. If using automatic registration, this node is not needed.
   - **data_collector.py** <br> This file contains a node to collect training data based the the specifications detailed [here](https://github.com/KeeganBruer/Time-Synchronize-Kinect-RGBD-Streams/tree/main/src/data_collection/README.md)
+- ### /gazebo_utils
+  - **model_mover.py** <br> This file broadcasts a message to move a gazebo model.  
 - ### /launch
   - **start_gazebo.launch** <br> This file launchs gazebo with the /world/cube_test.world
   - **start_collection.launch** <br> This file launchs four tf transform broadcaster and a data_collection node.
