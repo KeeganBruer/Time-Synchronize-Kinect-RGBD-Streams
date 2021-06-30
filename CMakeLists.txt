@@ -27,10 +27,17 @@ include_directories(
   ${catkin_LIBRARIES}
   ${Eigen3_INCLUDE_DIRS}
   src
+  src/registration
+  src/data_collection
   SYSTEM ${EIGEN3_INCLUDE_DIR}
 )
 
-add_executable(time_sync_kinects src/time_sync_kinects.cpp src/registration.cpp src/combination.cpp)
+add_executable(time_sync_kinects 
+	src/registration/time_sync_kinects.cpp 
+	src/registration/registration.cpp 
+	src/registration/combination.cpp
+	src/data_collection/tf_broadcaster.py
+)
 target_link_libraries(time_sync_kinects ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 add_dependencies(time_sync_kinects time_sync_kinects_generate_messages_cpp)
 
