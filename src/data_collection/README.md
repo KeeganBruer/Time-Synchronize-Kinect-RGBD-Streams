@@ -22,6 +22,14 @@ The distribution we are encoding takes in the position of the depth camera, and 
 [Camera X,  Camera Y,  Camera Z, Camera Roll,  Camera Pitch,  Camera Yaw, Time]
  => 
 [D1, D2, D3, ... Dn-1, Dn] 
+
+## Representations Option 4
+The distribution we are encoding takes in the position of the depth camera, and the current time as the X; and all the distances received from the depth camera as the Y.  This way of representing the sensors will treat the depth samples as being random but that shouldn't be an issue because a probability distribution of a 3D object moving over time is not strongly connected to the specific value of the depth sensors. This week connection to the distance sensors will result in a lot more noise in the final samples, but would reduce the number of context points by a ton (one per time, rather than one per depth per time). A representation of the inputs and output is shown below. 
+<br>
+<br>
+[Camera1 X,  Camera1 Y,  Camera1 Z, Camera1 T, Camera2 X,  Camera2 Y,  Camera2 Z, Camera2 T]
+ => 
+[distance_to_intersection / distance_to_second_point] 
 <br>
 <br>
  To collect this data, we run a ROS node that will listen for any number of kinect cameras and transform frames. The ROS node uses the transform frame to fill out the first 6 arguments of X, the x, y, z, pitch, roll and yaw of the camera. The node also uses the timestamp of the depth image fill out the last argument of X. Finally, the node uses the received depth image to construct Y, an array of all distance values.

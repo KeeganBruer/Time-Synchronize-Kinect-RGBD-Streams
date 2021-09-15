@@ -62,8 +62,6 @@ def callback(ros_image, args):
     if (sample_type in [1,2,3]):
         sensor_y = depth_array.flatten()
     elif (sample_type == 4):
-        print("grrr")
-        print(rot)
         w = 10 #len(depth_array)
         h = 10 #len(depth_array[0])
         for x in range(w):
@@ -85,8 +83,6 @@ def callback(ros_image, args):
                     origin[1] + view_distance * forward[1],
                     origin[2] + view_distance * forward[2]
                 ]
-                print(origin)
-                print(new_point)
                 sensor_x = [*origin, timestamp, *new_point, timestamp]
                 sensor_y = depth_array[x][y] / view_distance
                 X.append(sensor_x)
