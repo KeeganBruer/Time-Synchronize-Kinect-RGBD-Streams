@@ -24,7 +24,7 @@ The distribution we are encoding takes in the position of the depth camera, and 
 [D1, D2, D3, ... Dn-1, Dn] 
 
 ## Representations Option 4
-The distribution we are encoding takes in the position of the depth camera, and the current time as the X; and all the distances received from the depth camera as the Y.  This way of representing the sensors will treat the depth samples as being random but that shouldn't be an issue because a probability distribution of a 3D object moving over time is not strongly connected to the specific value of the depth sensors. This week connection to the distance sensors will result in a lot more noise in the final samples, but would reduce the number of context points by a ton (one per time, rather than one per depth per time). A representation of the inputs and output is shown below. 
+
 <br>
 <br>
 [Camera1 X,  Camera1 Y,  Camera1 Z, Camera1 T, Camera2 X,  Camera2 Y,  Camera2 Z, Camera2 T]
