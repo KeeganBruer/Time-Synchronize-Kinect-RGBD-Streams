@@ -24,9 +24,6 @@ The distribution we are encoding takes in the position of the depth camera, and 
 [D1, D2, D3, ... Dn-1, Dn] 
 
 ## Representations Option 4
-
-<br>
-<br>
 [Camera1 X,  Camera1 Y,  Camera1 Z, Camera1 T, Camera2 X,  Camera2 Y,  Camera2 Z, Camera2 T]
  => 
 [distance_to_intersection / distance_to_second_point] 
