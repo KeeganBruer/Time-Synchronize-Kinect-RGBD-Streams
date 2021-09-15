@@ -22,6 +22,12 @@ The distribution we are encoding takes in the position of the depth camera, and 
 [Camera X,  Camera Y,  Camera Z, Camera Roll,  Camera Pitch,  Camera Yaw, Time]
  => 
 [D1, D2, D3, ... Dn-1, Dn] 
+<br>
+<br>
+ To collect this data, we run a ROS node that will listen for any number of kinect cameras and transform frames. The ROS node uses the transform frame to fill out the first 6 arguments of X, the x, y, z, pitch, roll and yaw of the camera. The node also uses the timestamp of the depth image fill out the last argument of X. Finally, the node uses the received depth image to construct Y, an array of all distance values.
+<br>
+<br>
+All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "2", as an easy way to access which format the data was collected in. 
 
 ## Representations Option 4
 [Camera1 X,  Camera1 Y,  Camera1 Z, Camera1 T, Camera2 X,  Camera2 Y,  Camera2 Z, Camera2 T]
@@ -29,7 +35,4 @@ The distribution we are encoding takes in the position of the depth camera, and 
 [distance_to_intersection / distance_to_second_point] 
 <br>
 <br>
- To collect this data, we run a ROS node that will listen for any number of kinect cameras and transform frames. The ROS node uses the transform frame to fill out the first 6 arguments of X, the x, y, z, pitch, roll and yaw of the camera. The node also uses the timestamp of the depth image fill out the last argument of X. Finally, the node uses the received depth image to construct Y, an array of all distance values.
-<br>
-<br>
-All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "2", as an easy way to access which format the data was collected in. 
+All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "4", as an easy way to access which format the data was collected in. 
