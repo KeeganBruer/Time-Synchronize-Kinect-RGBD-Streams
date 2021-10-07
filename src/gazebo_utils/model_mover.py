@@ -8,10 +8,11 @@ def main():
     rospy.init_node('set_pose')
     rospy.wait_for_service('/gazebo/set_model_state')
     z = 0.0
-    z_inc = 0.01
+    z_step = 0.005
+    z_inc = z_step
     while not rospy.is_shutdown():
         state_msg = ModelState()
-        state_msg.model_name = 'unit_box'
+        state_msg.model_name = 'wall'
         state_msg.pose.position.x = 0
         state_msg.pose.position.y = 0
         state_msg.pose.position.z = z
@@ -20,10 +21,10 @@ def main():
         state_msg.pose.orientation.z = 0
         state_msg.pose.orientation.w = 0
         
-        if z >= 2.0:
-            z_inc = -0.01
+        if z >= 4.0:
+            z_inc = -1 * z_step
         if z <= 0.0:
-            z_inc = 0.01
+            z_inc = z_step
         z += z_inc
 
         try:

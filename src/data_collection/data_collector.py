@@ -13,7 +13,7 @@ import math
 
 sample_split = 1000000
 sample_type = 4
-view_distance = 1000
+view_distance = 10
 bridge = CvBridge()
 start_time = None
 X = []
@@ -34,14 +34,14 @@ def callback(ros_image, args):
     tf_topic = args[2]
     try:
         depth_image = bridge.imgmsg_to_cv2(ros_image, desired_encoding='passthrough')
-        print(depth_image.dtype)
+        #print(depth_image.dtype)
     except Exception as e:
         print(e)
     depth_array = np.array(depth_image, dtype=np.float32)
     (trans,rot) = listener.lookupTransform("world", tf_topic, rospy.Time(0))
     position = [round(float(x), 4) for x in trans]
-    print("rotation")
-    print(rot)
+    #print("rotation")
+    #print(rot)
     rotation = [round(float(x), 4) for x in tf.transformations.euler_from_quaternion(rot)]
     if (sample_type in [1, 2, 3]):
         pose = [*position, *rotation] #position and rotation
@@ -62,10 +62,8 @@ def callback(ros_image, args):
     if (sample_type in [1,2,3]):
         sensor_y = depth_array.flatten()
     elif (sample_type == 4):
-        print("grrr")
-        print(rot)
-        w = 10 #len(depth_array)
-        h = 10 #len(depth_array[0])
+        w = len(depth_array)
+        h = len(depth_array[0])
         for x in range(w):
             for y in range(h):
                 origin = pose[0:3]
@@ -85,20 +83,25 @@ def callback(ros_image, args):
                     origin[1] + view_distance * forward[1],
                     origin[2] + view_distance * forward[2]
                 ]
-                print(origin)
-                print(new_point)
+                #print(origin)
+                #print(new_point)
                 sensor_x = [*origin, timestamp, *new_point, timestamp]
                 sensor_y = depth_array[x][y] / view_distance
                 X.append(sensor_x)
                 Y.append(sensor_y)
-            
-    print("\rCollected {0:4d} points".format(len(X)), end="")
-
+        
+        print(len(X))
+        save_data(X, Y, save_count)
+        X= []
+        Y =[]
+        save_count+=1
     if len(X) >= sample_split:
-        out_x = X
-        out_y = Y
-        X = []
-        Y = []
+        out_x = X[0:sample_split]
+        out_y = Y[0:sample_split]
+        
+        X = X[sample_split:len(X)]
+        Y = Y[sample_split:len(Y)]
+        print("\rCollected {0:4d} points in format {1}, leaving {2} points to be saved next".format(len(out_x), sample_type, len(X)), end="")
         save_data(out_x, out_y, save_count)
         save_count += 1
         

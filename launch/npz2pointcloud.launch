@@ -1,0 +1,11 @@
+<launch>
+	<node name="maptf_broadcaster" pkg="time_sync_kinects" type="tf_broadcaster.py" respawn="false">
+                <param name="tf_name" type="string" value="map" />
+                <param name="pose" type="string" value="0 0 0 0 0 0" />
+                <param name="count" type="int" value="5" />
+        </node>	
+	<node name="publish_npz" pkg="time_sync_kinects" type="publish_npz.py" respawn="false" output="screen">
+                <param name="save_location" type="string" value="/home/ros/catkin_ws/src/time_sync_kinects/samples" />
+		<param name="publish_topic" type="string" value="/pointcloud/out" />
+	</node>
+</launch>

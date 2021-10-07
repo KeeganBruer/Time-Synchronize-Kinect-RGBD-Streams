@@ -30,6 +30,7 @@ include_directories(
   src/registration
   src/data_collection
   src/gazebo_utils
+  src/pointcloud_publisher
   SYSTEM ${EIGEN3_INCLUDE_DIR}
 )
 
@@ -40,6 +41,7 @@ add_executable(time_sync_kinects
 	src/data_collection/tf_broadcaster.py
 	src/data_collection/data_collector.py
 	src/gazebo_utils/model_mover.py
+	src/pointcloud_publisher/publish_npz.py
 )
 target_link_libraries(time_sync_kinects ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 add_dependencies(time_sync_kinects time_sync_kinects_generate_messages_cpp)
