@@ -28,3 +28,11 @@ The distribution we are encoding takes in the position of the depth camera, and 
 <br>
 <br>
 All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "2", as an easy way to access which format the data was collected in. 
+
+## Representations Option 4
+[Camera1 X,  Camera1 Y,  Camera1 Z, Camera1 T, Camera2 X,  Camera2 Y,  Camera2 Z, Camera2 T]
+ => 
+[distance_to_intersection / distance_to_second_point] 
+<br>
+<br>
+All the sensor data is then saved into two individual 2D arrays, one for all the Xs and another for the Ys. Then the data is saved into an .npz file as "sample_set_x" and "sample_set_y". The .npz file will also include the "repr_type" attribute, set to "4", as an easy way to access which format the data was collected in. 
