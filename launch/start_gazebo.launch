@@ -8,7 +8,11 @@
     <arg name="debug" value="false"/>
   </include>
   <node name="model_mover" pkg="time_sync_kinects" type="model_mover.py" respawn="false" output="screen">
-    
+   	<param name="model_name" type="string" value="wall"/>
+	<param name="steps" type="string" value="0.0, 0, 0.0004" /> 
+  	<param name="max_pos" type="string" value="0, 0, 2.5" />
+	<param name="min_pos" type="string" value="0, 0, 0.5" />
+	<param name="init_pos" type="string" value="0, 0, 1" />
   </node>
 
 </launch>

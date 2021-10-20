@@ -16,6 +16,7 @@ sample_type = 4
 view_distance = 10
 bridge = CvBridge()
 start_time = None
+thread_list = []
 X = []
 Y = []
 save_count = 0
@@ -29,6 +30,7 @@ def callback(ros_image, args):
     global sample_type
     global save_count
     global view_distance
+    global thread_list
     _id = args[0]
     listener = args[1]
     tf_topic = args[2]
@@ -62,38 +64,12 @@ def callback(ros_image, args):
     if (sample_type in [1,2,3]):
         sensor_y = depth_array.flatten()
     elif (sample_type == 4):
-        w = len(depth_array)
-        h = len(depth_array[0])
-        for x in range(w):
-            for y in range(h):
-                origin = pose[0:3]
-                shift_x = x - (w/2) #Shift so 0,0 is in the center
-                shift_y = y - (h/2)
-                pixel_q = get_quaternion(shift_x, shift_y, w, h, 1.0472) #get quaternion of pixel
-                #quaternion in terms of the world origin
-                q = quaternion_multiply(pixel_q, rot)
-                #q = pixel_q
-                forward = [
-                    2 * (q[1]*q[3] + q[0]*q[2]),  # X
-                    2 * (q[2]*q[3] + q[0]*q[1]),  # Y
-                    1- 2 * (q[1]*q[1] + q[2]*q[2])# Z
-                ]
-                new_point = [
-                    origin[0] + view_distance * forward[0],
-                    origin[1] + view_distance * forward[1],
-                    origin[2] + view_distance * forward[2]
-                ]
-
-                sensor_x = [*origin, timestamp, *new_point, timestamp]
-                sensor_y = depth_array[x][y] / view_distance
-                X.append(sensor_x)
-                Y.append(sensor_y)
-        
-        print(len(X))
-        save_data(X, Y, save_count)
-        X= []
-        Y =[]
-        save_count+=1
+        if len(thread_list) < 40:
+            save_depth_image(depth_image, pose, rot, timestamp, save_count)
+            save_count+=1
+        else:
+            thread_list[0].join()
+            thread_list.pop(0)
     if len(X) >= sample_split:
         out_x = X[0:sample_split]
         out_y = Y[0:sample_split]
@@ -101,9 +77,43 @@ def callback(ros_image, args):
         X = X[sample_split:len(X)]
         Y = Y[sample_split:len(Y)]
         print("\rCollected {0:4d} points in format {1}, leaving {2} points to be saved next".format(len(out_x), sample_type, len(X)), end="")
-        save_data(out_x, out_y, save_count)
+        x = threading.Thread(target=save_data, args=(out_x, out_y, save_count))
         save_count += 1
-        
+
+def save_depthimage_to_type_4(depth_array, save_count, pose, rot, timestamp):
+    w = len(depth_array)
+    h = len(depth_array[0])
+    X = []
+    Y = []
+    print(w, h)
+    for x in range(w):
+        for y in range(h):
+            origin = pose[0:3]
+            shift_x = x - (w/2) #Shift so 0,0 is in the center
+            shift_y = y - (h/2)
+            pixel_q = get_quaternion(shift_x, shift_y, w, h, 1.0472) #get quaternion of pixel
+            #quaternion in terms of the world origin
+            q = quaternion_multiply(pixel_q, rot)
+            #q = pixel_q
+            forward = [
+                2 * (q[1]*q[3] + q[0]*q[2]),  # X
+                2 * (q[2]*q[3] + q[0]*q[1]),  # Y
+                1- 2 * (q[1]*q[1] + q[2]*q[2])# Z
+            ]
+            new_point = [
+                origin[0] + view_distance * forward[0],
+                origin[1] + view_distance * forward[1],
+                origin[2] + view_distance * forward[2]
+            ]
+
+            sensor_x = [*origin, timestamp, *new_point, timestamp]
+            sensor_y = depth_array[x][y] / view_distance
+            X.append(sensor_x)
+            Y.append(sensor_y)
+        #print(str(x)+" ", end="", flush=True)
+    print(len(X))
+    save_depth_image(depth_array, save_count)
+
 def get_quaternion(x, y, w, h, fov):
     x_angle = (x/float(w))*fov #Get angle if x is -w/2 then x/w is -1/2. then the angle is -1/2 * fov (60deg) = -30deg.
     y_angle = (y/float(h))*fov
@@ -137,6 +147,16 @@ def save_data(sample_x, sample_y, save_count):
     np.savez_compressed('{0}/catkin_ws/src/time_sync_kinects/samples/sample_set_{1}'.format(os.path.expanduser("~"), save_count), sample_set_x=sample_x, sample_set_y=sample_y, repr_type=sample_type)
     del sample_x[:]
     del sample_y[:]
+def save_depth_image(depth_array, pose, rot, timestamp, save_count):
+    np.savez_compressed(
+        '{0}/catkin_ws/src/time_sync_kinects/raw_data/sample_set_{1}'.format(os.path.expanduser("~"), save_count), 
+        depth_array=depth_array,
+        pose=pose,
+        rotation=rot,
+        timestamp=timestamp,
+        repr_type="depth_array"
+    )
+
 
 def listener():
     global sample_split

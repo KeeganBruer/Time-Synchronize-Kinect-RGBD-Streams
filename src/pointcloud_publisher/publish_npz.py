@@ -28,31 +28,32 @@ def publish_pointclouds(ptcld_publisher, save_location):
     
     file_paths = glob.glob(os.path.abspath(save_location) + '/*.npz')
     print(file_paths)
-    for i in range(len(file_paths)):
-        data = np.load(file_paths[i])
-        sample_set_x = data["sample_set_x"]
-        sample_set_y = data["sample_set_y"]
+    for j in range(1000):
+        for i in range(len(file_paths)):
+            data = np.load(file_paths[i])
+            sample_set_x = data["sample_set_x"]
+            sample_set_y = data["sample_set_y"]
 
-        h = std_msgs.msg.Header()
-        h.stamp = rospy.Time.now()
-        h.frame_id = "map"
-        points = []
-        for i in range(len(sample_set_x)):
-            point1 = sample_set_x[i][0:3]
-            p_time = sample_set_x[i][3]
-            point2 = sample_set_x[i][4:7]
-            distance = sample_set_y[i]
-            #print("point {} point {} p_time {} distance {}".format(point1, point2, p_time, distance))
-            midpoint = [
-                (point1[0]+point2[0])* distance, 
-                (point1[1]+point2[1]) * distance, 
-                point1[2]+point2[2] * distance
-            ]
-            points.append(point1)
-            points.append(midpoint)
-        print("Publishing a pointcloud with {} points".format(len(points)))
-        out_ptcld = point_cloud2.create_cloud(h, fields, points)
-        ptcld_publisher.publish(out_ptcld)
+            h = std_msgs.msg.Header()
+            h.stamp = rospy.Time.now()
+            h.frame_id = "map"
+            points = []
+            for i in range(len(sample_set_x)):
+                point1 = sample_set_x[i][0:3]
+                p_time = sample_set_x[i][3]
+                point2 = sample_set_x[i][4:7]
+                distance = sample_set_y[i]
+                #print("point {} point {} p_time {} distance {}".format(point1, point2, p_time, distance))
+                midpoint = [
+                    (point1[0]+point2[0])* distance, 
+                    (point1[1]+point2[1]) * distance, 
+                    point1[2]+point2[2] * distance
+                ]
+                points.append(point1)
+                points.append(midpoint)
+            print("Publishing a pointcloud with {} points".format(len(points)))
+            out_ptcld = point_cloud2.create_cloud(h, fields, points)
+            ptcld_publisher.publish(out_ptcld)
 
 def listener():
     rospy.init_node('data_collector', anonymous=True)
